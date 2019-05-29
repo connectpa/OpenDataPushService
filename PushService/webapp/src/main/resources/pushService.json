@@ -1,0 +1,421 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Open Data Push Service",
+    "description": "This API is to create and generate the metadata and restore the data.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "pushService",
+      "description": "Push service operations"
+    }
+  ],
+  "paths": {
+    "/api/views": {
+      "post": {
+        "tags": [
+          "pushService"
+        ],
+        "description": "Create Open Data metadata",
+        "operationId": "createMetadata",
+        "requestBody": {
+          "description": "The metadata used to generate the Open Data dataset .",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "licenseId": {
+                    "type": "string"
+                  },
+                  "locale": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "rdfClass": {
+                        "type": "string"
+                      },
+                      "rdfSubject": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful, the dataset has been created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Required header for 401 responses.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "Bearer"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  },
+                  "description": "An error that occurred during a request."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/views/{id}/columns.json": {
+      "post": {
+        "tags": [
+          "pushService"
+        ],
+        "operationId": "addType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "dataset id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The column that has to be added and from whom generating the proprity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "dataTypeName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful, the entity property has been created."
+          },
+          "400": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Required header for 401 responses.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "Bearer"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  },
+                  "description": "An error that occurred during a request."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resource/{id}.json": {
+      "put": {
+        "tags": [
+          "pushService"
+        ],
+        "operationId": "insertData",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "dataset id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "CSV file for the inserted data.",
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful, the data has been inserted."
+          },
+          "400": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Required header for 401 responses.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "Bearer"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  },
+                  "description": "An error that occurred during a request."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "One or more errors occurred while processing the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "The error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "apiKey",
+        "description": "For accessing the API a valid JWT token must be passed in all the queries in the 'Authorization' header.",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  }
+}
