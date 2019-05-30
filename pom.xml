@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>it.connectpa</groupId>
+  <artifactId>opendata-push-service</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <!-- Maven build configuration -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.source.version>1.8</project.build.source.version>
+    <project.build.target.version>1.8</project.build.target.version>
+      
+    <!-- Dependencies -->
+    <spring-boot.version>2.1.5.RELEASE</spring-boot.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <!-- Import dependency management from Spring Boot -->
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <version>${spring-boot.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.swagger</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>1.5.22</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-joda</artifactId>
+      <version>2.9.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <version>${spring-boot.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+    
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot.version}</version>
+        <configuration>
+          <profiles>
+            <profile>${environment}</profile>
+          </profiles>
+        </configuration>
+      </plugin>
+     
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>4.0.0</version>
+        <executions>
+          <execution>
+            <id>generate-server</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/pushService.json</inputSpec>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <generatorName>spring</generatorName>
+              <apiPackage>it.connectpa.odatapushservice.server.api</apiPackage>
+              <modelPackage>it.connectpa.odatapushservice.server.model</modelPackage>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <generateApiTests>false</generateApiTests>
+              <configOptions>
+                <library>spring-boot</library>
+                <interfaceOnly>true</interfaceOnly>
+                <useBeanValidation>true</useBeanValidation>
+                <dateLibrary>joda</dateLibrary>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/pushService.json</inputSpec>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <generatorName>java</generatorName>
+              <output>${project.build.directory}/generated-test-sources/swagger</output>
+              <apiPackage>it.connectpa.odatapushservice.client.api</apiPackage>
+              <modelPackage>it.connectpa.odatapushservice.client.model</modelPackage>
+              <generateApiTests>false</generateApiTests>
+              <generateModelDocumentation>false</generateModelDocumentation>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <configOptions>
+                <library>resttemplate</library>
+                <dateLibrary>joda</dateLibrary>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+         
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-test-sources/swagger/src/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId >org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+        <configuration>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <encoding>utf-8</encoding>
+          <runOrder>alphabetical</runOrder>
+          <argLine>-Xms512m -Xmx1024m -Xss256k</argLine>
+        </configuration>
+      </plugin>
+    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version> 
+        <configuration>
+          <source>${project.build.source.version}</source>
+          <target>${project.build.target.version}</target>
+          <useIncrementalCompilation>false</useIncrementalCompilation>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+          <compilerArgument>-Xlint:unchecked</compilerArgument>
+        </configuration>
+      </plugin>
+    </plugins>
+    
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <environment>dev</environment>
+      </properties>
+    </profile>
+  </profiles>
+</project>

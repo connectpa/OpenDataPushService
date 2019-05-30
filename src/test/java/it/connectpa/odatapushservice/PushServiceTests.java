@@ -1,12 +1,12 @@
-package net.tirasa;
+package it.connectpa.odatapushservice;
 
 import static org.junit.Assert.assertEquals;
 
-import io.swagger.client.ApiClient;
-import io.swagger.client.api.PushServiceApi;
-import io.swagger.client.model.Body;
-import io.swagger.client.model.Body1;
-import io.swagger.client.model.InlineResponse201;
+import it.connectpa.odatapushservice.client.ApiClient;
+import it.connectpa.odatapushservice.client.api.PushServiceApi;
+import it.connectpa.odatapushservice.client.model.InlineObject;
+import it.connectpa.odatapushservice.client.model.InlineObject1;
+import it.connectpa.odatapushservice.client.model.InlineResponse201;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +14,9 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = { PushServiceTestConfiguration.class })
 public class PushServiceTests {
 
     @LocalServerPort
@@ -23,16 +25,15 @@ public class PushServiceTests {
     @Test
     public void addType() {
         PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
-        Body1 payload = new Body1();
-        api.addType(payload, "abcd-efgh");
+        InlineObject1 payload = new InlineObject1();
+        api.addType("abcd-efgh", payload);
     }
 
     @Test
     public void createMetadataTest() {
         PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
-        Body payload = new Body();
+        InlineObject payload = new InlineObject();
         InlineResponse201 response = api.createMetadata(payload);
-        assertEquals("abcd-efgh", response.getId());
+        assertEquals(response.getId(), "abcd-efgh");
     }
-
 }
