@@ -34,44 +34,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "licenseId": {
-                    "type": "string"
-                  },
-                  "locale": {
-                    "type": "string"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "properties": {
-                      "rdfClass": {
-                        "type": "string"
-                      },
-                      "rdfSubject": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": {
-                      "type": "object"
-                    }
-                  }
-                }
+                "$ref": "#/components/schemas/Metadata"
               }
             }
           }
@@ -82,12 +45,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreatedMetadata"
                 }
               }
             }
@@ -176,7 +134,7 @@
         "tags": [
           "pushService"
         ],
-        "operationId": "addType",
+        "operationId": "addColumn",
         "parameters": [
           {
             "name": "id",
@@ -189,27 +147,26 @@
           }
         ],
         "requestBody": {
-          "description": "The column that has to be added and from whom generating the proprity",
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "dataTypeName": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/Column"
               }
             }
           },
+          "description": "The column that has to be added and from whom generating the proprity",
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "Successful, the entity property has been created."
+          "201": {
+            "description": "Successful, the new type has been added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedColumn"
+                }
+              }
+            }
           },
           "400": {
             "description": "One or more errors occurred while processing the request.",
@@ -310,23 +267,24 @@
         "requestBody": {
           "description": "CSV file for the inserted data.",
           "content": {
-            "text/csv": {
+            "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
+                "$ref": "#/components/schemas/Data"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "Successful, the data has been inserted."
+          "201": {
+            "description": "Successful, the data has been inserted .",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstertedData"
+                }
+              }
+            }
           },
           "400": {
             "description": "One or more errors occurred while processing the request.",
@@ -409,6 +367,101 @@
     }
   },
   "components": {
+    "schemas": {
+      "Column": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "dataTypeName": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatedColumn": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dataTypeName": {
+            "type": "string"
+          }
+        }
+      },
+      "Metadata": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "licenseId": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "rdfClass": {
+                "type": "string"
+              },
+              "rdfSubject": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "CreatedMetadata": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "Data": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "InstertedData": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "recordsNumber": {
+            "type": "integer"
+          }
+        }
+      }
+    },
     "securitySchemes": {
       "Bearer": {
         "type": "apiKey",
