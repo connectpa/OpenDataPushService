@@ -9,7 +9,7 @@ import it.connectpa.odatapushservice.server.model.CreatedColumn;
 import it.connectpa.odatapushservice.server.model.CreatedMetadata;
 import it.connectpa.odatapushservice.server.model.Metadata;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -18,10 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class PushService implements ApiApi, ResourceApi {
@@ -62,11 +60,12 @@ public class PushService implements ApiApi, ResourceApi {
     @Override
     public ResponseEntity<InstertedData> insertData(
             final @PathVariable("id") String id,
-            final @RequestParam("file") MultipartFile file) {
-        LOG.info("PUT: {} {}", id, file.getOriginalFilename());
+            final @RequestBody String body) {
+
+        LOG.info("PUT: {} {}", id, body);
 
         InstertedData responsePayload = new InstertedData();
-        try (InputStreamReader reader = new InputStreamReader(file.getInputStream());
+        try (StringReader reader = new StringReader(body);
                 CSVReader csvReader = new CSVReader(reader)) {
 
             Integer recordsNumber = csvReader.readAll().size() - 1;
@@ -78,6 +77,6 @@ public class PushService implements ApiApi, ResourceApi {
             LOG.error("While parsing CSV file {}", e.getMessage());
         }
 
-        return new ResponseEntity<>(responsePayload, HttpStatus.CREATED);
+        return new ResponseEntity<>(responsePayload, HttpStatus.OK);
     }
 }

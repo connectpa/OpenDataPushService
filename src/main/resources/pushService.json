@@ -265,18 +265,18 @@
           }
         ],
         "requestBody": {
-          "description": "CSV file for the inserted data.",
+          "description": "CSV content for the inserted data.",
           "content": {
-            "multipart/form-data": {
+            "text/csv": {
               "schema": {
-                "$ref": "#/components/schemas/Data"
+                "type": "string"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful, the data has been inserted .",
             "content": {
               "application/json": {
@@ -440,14 +440,6 @@
           },
           "description": {
             "type": "string"
-          }
-        }
-      },
-      "Data": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary"
           }
         }
       },

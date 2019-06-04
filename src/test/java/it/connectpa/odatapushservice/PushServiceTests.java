@@ -2,6 +2,9 @@ package it.connectpa.odatapushservice;
 
 import static org.junit.Assert.assertEquals;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteSource;
 import it.connectpa.odatapushservice.client.ApiClient;
 import it.connectpa.odatapushservice.client.api.PushServiceApi;
 import it.connectpa.odatapushservice.client.model.Column;
@@ -9,7 +12,16 @@ import it.connectpa.odatapushservice.client.model.CreatedColumn;
 import it.connectpa.odatapushservice.client.model.CreatedMetadata;
 import it.connectpa.odatapushservice.client.model.InstertedData;
 import it.connectpa.odatapushservice.client.model.Metadata;
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.http.Consts;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -47,12 +59,41 @@ public class PushServiceTests {
     }
 
     @Test
-    public void insertData() {
+    public void insertData() throws IOException {
+        ByteSource payload = new ByteSource() {
+
+            @Override
+            public InputStream openStream() throws IOException {
+                return getClass().getResourceAsStream("/test.csv");
+            }
+        };
+
         PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
-        File payload = new File("src/main/resources/test.csv");
-        InstertedData response = api.insertData("abcd-efgh", payload);
+        InstertedData response = api.insertData("abcd-efgh", payload.asCharSource(Charsets.UTF_8).read());
         assertEquals(Integer.valueOf(10), response.getRecordsNumber());
         assertEquals("abcd-efgh", response.getId());
     }
 
+    @Test
+    public void issue5() throws IOException {
+        ByteSource payload = new ByteSource() {
+
+            @Override
+            public InputStream openStream() throws IOException {
+                return getClass().getResourceAsStream("/test.csv");
+            }
+        };
+
+        HttpPut insertData = new HttpPut("http://localhost:" + port + "/resource/abcd-efgh.json");
+        insertData.setHeader(HttpHeaders.CONTENT_TYPE, "text/csv");
+        insertData.setEntity(new StringEntity(
+                payload.asCharSource(Charsets.UTF_8).read(), ContentType.create("text/csv", Consts.UTF_8)));
+        CloseableHttpResponse httpResponse = HttpClients.createDefault().execute(insertData);
+        assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+
+        InstertedData response = new ObjectMapper().
+                readValue(httpResponse.getEntity().getContent(), InstertedData.class);
+        assertEquals(Integer.valueOf(10), response.getRecordsNumber());
+        assertEquals("abcd-efgh", response.getId());
+    }
 }
