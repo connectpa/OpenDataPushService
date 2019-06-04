@@ -65,14 +65,14 @@ public class PushService implements ApiApi, ResourceApi {
             final @RequestParam("file") MultipartFile file) {
         LOG.info("PUT: {} {}", id, file.getOriginalFilename());
 
-        InputStreamReader reader;
         InstertedData responsePayload = new InstertedData();
-        try {
-            reader = new InputStreamReader(file.getInputStream());
-            CSVReader csvReader = new CSVReader(reader);
+        try (InputStreamReader reader = new InputStreamReader(file.getInputStream());
+                CSVReader csvReader = new CSVReader(reader)) {
+
             Integer recordsNumber = csvReader.readAll().size() - 1;
             responsePayload.setId(id);
             responsePayload.setRecordsNumber(recordsNumber);
+
             LOG.info("Number of records {}", recordsNumber);
         } catch (IOException e) {
             LOG.error("While parsing CSV file {}", e.getMessage());
