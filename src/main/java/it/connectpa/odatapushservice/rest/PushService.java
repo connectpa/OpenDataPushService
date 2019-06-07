@@ -1,21 +1,28 @@
 package it.connectpa.odatapushservice.rest;
 
 import com.opencsv.CSVReader;
+import it.connectpa.odatapushservice.dao.PushDataDAO;
+import it.connectpa.odatapushservice.model.MetadataInfo;
 import it.connectpa.odatapushservice.server.api.ApiApi;
 import it.connectpa.odatapushservice.server.api.ResourceApi;
 import it.connectpa.odatapushservice.server.model.Column;
 import it.connectpa.odatapushservice.server.model.InstertedData;
 import it.connectpa.odatapushservice.server.model.CreatedColumn;
 import it.connectpa.odatapushservice.server.model.CreatedMetadata;
+import it.connectpa.odatapushservice.server.model.InlineResponse400;
 import it.connectpa.odatapushservice.server.model.Metadata;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Optional;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +33,9 @@ public class PushService implements ApiApi, ResourceApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(PushService.class);
 
+    @Autowired
+    private PushDataDAO pushDataDAO;
+
     @Override
     public Optional<NativeWebRequest> getRequest() {
         return Optional.empty();
@@ -35,10 +45,21 @@ public class PushService implements ApiApi, ResourceApi {
     public ResponseEntity<CreatedMetadata> createMetadata(final @RequestBody Metadata metadata) {
         LOG.info("POST for creating metadata: {}", metadata);
 
+        String name = metadata.getName().replaceAll("\\s", "_").toLowerCase();
+        String id = UUID.nameUUIDFromBytes(name.getBytes()).toString();
+        if (pushDataDAO.ifExistMetaData(name)) {
+            throw new BadRequestException(400, "The inserted matadata with name: " + metadata.getName()
+                    + " is already existing");
+        } else {
+            MetadataInfo metadataInfo = new MetadataInfo(id, name, metadata.getDescription());
+            LOG.info("The metdata after processing: {}", metadataInfo);
+            pushDataDAO.insertMetaData(metadataInfo);
+        }
+
         CreatedMetadata responsePayload = new CreatedMetadata();
-        responsePayload.setId(UUID.randomUUID().toString());
+        responsePayload.setId(id);
         responsePayload.setDescription(metadata.getDescription());
-        responsePayload.setName(metadata.getName());
+        responsePayload.setName(name);
 
         return new ResponseEntity<>(responsePayload, HttpStatus.CREATED);
     }
@@ -79,4 +100,18 @@ public class PushService implements ApiApi, ResourceApi {
 
         return new ResponseEntity<>(responsePayload, HttpStatus.OK);
     }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<InlineResponse400> badRequestException(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            final BadRequestException e) {
+        LOG.error("Bad request", e);
+
+        InlineResponse400 responsePayload = new InlineResponse400();
+        responsePayload.setCode(e.getCode());
+        responsePayload.setMessage(e.getMessage());
+        return new ResponseEntity<>(responsePayload, HttpStatus.BAD_REQUEST);
+    }
+
 }
