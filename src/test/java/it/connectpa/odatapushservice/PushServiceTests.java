@@ -15,6 +15,7 @@ import it.connectpa.odatapushservice.client.model.Metadata;
 import it.connectpa.odatapushservice.rest.BadRequestException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 import org.apache.http.Consts;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -74,9 +75,48 @@ public class PushServiceTests {
         Column payload = new Column();
         payload.setName("Test");
         payload.setDataTypeName("number");
-        CreatedColumn response = api.addColumn("abcd-efgh", payload);
-        assertEquals("abcd-efgh", response.getId());
+        String id = UUID.nameUUIDFromBytes("test_metadata".getBytes()).toString();
+        CreatedColumn response = api.addColumn(id, payload);
+        assertEquals(id, response.getId());
         assertEquals("number", response.getDataTypeName());
+    }
+
+    @Test
+    public void addColumnNoDataset() throws IOException {
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        Column payload = new Column();
+        payload.setName("Test");
+        payload.setDataTypeName("number");
+        String id = UUID.nameUUIDFromBytes("test".getBytes()).toString();
+        try {
+            api.addColumn(id, payload);
+        } catch (HttpClientErrorException e) {
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatusCode());
+
+            BadRequestException bre = MAPPER.readValue(e.getResponseBodyAsByteArray(), BadRequestException.class);
+            assertEquals(404, bre.getCode().intValue());
+            assertEquals("The dataset with id " + id + " does not exist", bre.getMessage());
+        }
+
+    }
+
+    @Test
+    public void addColumnAlreayExisting() throws IOException {
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        Column payload = new Column();
+        payload.setName("Test");
+        payload.setDataTypeName("number");
+        String id = UUID.nameUUIDFromBytes("test_metadata".getBytes()).toString();
+        try {
+            api.addColumn(id, payload);
+        } catch (HttpClientErrorException e) {
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatusCode());
+
+            BadRequestException bre = MAPPER.readValue(e.getResponseBodyAsByteArray(), BadRequestException.class);
+            assertEquals(400, bre.getCode().intValue());
+            assertEquals("The column with name Test is already existing", bre.getMessage());
+        }
+
     }
 
     @Test

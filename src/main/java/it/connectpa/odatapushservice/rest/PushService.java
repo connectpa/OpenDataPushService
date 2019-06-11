@@ -3,6 +3,7 @@ package it.connectpa.odatapushservice.rest;
 import com.opencsv.CSVReader;
 import it.connectpa.odatapushservice.dao.PushDataDAO;
 import it.connectpa.odatapushservice.model.MetadataInfo;
+import it.connectpa.odatapushservice.model.TableColumn;
 import it.connectpa.odatapushservice.server.api.ApiApi;
 import it.connectpa.odatapushservice.server.api.ResourceApi;
 import it.connectpa.odatapushservice.server.model.Column;
@@ -13,6 +14,7 @@ import it.connectpa.odatapushservice.server.model.InlineResponse400;
 import it.connectpa.odatapushservice.server.model.Metadata;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -22,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,7 +50,7 @@ public class PushService implements ApiApi, ResourceApi {
 
         String name = metadata.getName().replaceAll("\\s", "_").toLowerCase();
         String id = UUID.nameUUIDFromBytes(name.getBytes()).toString();
-        if (pushDataDAO.ifExistMetaData(name)) {
+        if (pushDataDAO.findMetaData("name", name).isPresent()) {
             throw new BadRequestException(400, "The inserted matadata with name: " + metadata.getName()
                     + " is already existing");
         } else {
@@ -69,6 +72,22 @@ public class PushService implements ApiApi, ResourceApi {
             final @PathVariable("id") String id,
             final @RequestBody Column column) {
         LOG.info("POST to create a new column : {}  in a dataset with id {}", column, id);
+
+        Optional<String> tableName = pushDataDAO.findMetaData("id", id);
+        if (tableName.isPresent()) {
+            List<TableColumn> columns = pushDataDAO.findTableColumns(tableName.get());
+            if (CollectionUtils.isEmpty(columns)
+                    || !(columns.stream().anyMatch(c -> column.getName().toLowerCase()
+                    .equals(c.getField().toLowerCase())))) {
+                pushDataDAO.createColumn(tableName.get(), column);
+
+            } else {
+                throw new BadRequestException(400, "The column with name " + column.getName()
+                        + " is already existing");
+            }
+        } else {
+            throw new BadRequestException(404, "The dataset with id " + id + " does not exist");
+        }
 
         CreatedColumn responsePayload = new CreatedColumn();
         responsePayload.setId(id);
