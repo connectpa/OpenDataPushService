@@ -16,6 +16,6 @@ public interface PushDataDAO {
 
     List<TableColumn> findTableColumns(String tableName);
 
-    void insertData(String data);
+    void insertData(String query, List<String[]> batchList);
 
 }

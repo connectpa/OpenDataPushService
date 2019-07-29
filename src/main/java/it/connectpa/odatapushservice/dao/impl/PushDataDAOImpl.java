@@ -4,16 +4,22 @@ import it.connectpa.odatapushservice.dao.PushDataDAO;
 import it.connectpa.odatapushservice.model.MetadataInfo;
 import it.connectpa.odatapushservice.model.TableColumn;
 import it.connectpa.odatapushservice.server.model.Column;
+import it.connectpa.odatapushservice.util.DateUtil;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.collections.BidiMap;
+import org.apache.commons.collections.bidimap.DualHashBidiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations;
@@ -39,6 +45,17 @@ public class PushDataDAOImpl implements PushDataDAO {
     private static final String NULL = "null";
 
     private static final String KEY = "key";
+
+    private static final BidiMap TYPES;
+
+    static {
+        TYPES = new DualHashBidiMap();
+        TYPES.put("number", "DOUBLE");
+        TYPES.put("checkbox", "BOOLEAN");
+        TYPES.put("calendar_date", "DATE");
+        TYPES.put("date", "DATETIME");
+        TYPES.put("text", "VARCHAR (255)");
+    }
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -82,7 +99,7 @@ public class PushDataDAOImpl implements PushDataDAO {
     @Override
     public void createColumn(final String tableName, final Column column) {
         String sql = "ALTER TABLE " + tableName + " ADD " + column.getName()
-                + " " + transformType(column.getDataTypeName());
+                + " " + TYPES.get(column.getDataTypeName());
         jdbcTemplate.execute(sql);
 
     }
@@ -95,24 +112,28 @@ public class PushDataDAOImpl implements PushDataDAO {
     }
 
     @Override
-    public void insertData(String data) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    public void insertData(final String query, final List<String[]> batchList) {
+        jdbcTemplate.batchUpdate(query,
+                new BatchPreparedStatementSetter() {
 
-    private String transformType(final String type) {
-        switch (type) {
-            case "number":
-                return "DOUBLE";
-            case "checkbox":
-                return "BOOLEAN";
-            case "calendar_date":
-                return "DATE";
-            case "date":
-                return "DATETIME";
-            case "text":
-                return "VARCHAR (255)";
-        }
-        return null;
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                int index = 1;
+                for (String line : batchList.get(i)) {
+                    Date date = DateUtil.convertToDate(line);
+                    if (null != date) {
+                        ps.setDate(index++, new java.sql.Date(date.getTime()));
+                    } else {
+                        ps.setString(index++, line);
+                    }
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                return batchList.size();
+            }
+        });
     }
 
     private TableColumn build(final ResultSet rs) throws SQLException {

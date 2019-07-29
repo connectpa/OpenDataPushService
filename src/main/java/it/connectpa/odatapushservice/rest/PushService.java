@@ -12,13 +12,16 @@ import it.connectpa.odatapushservice.server.model.CreatedColumn;
 import it.connectpa.odatapushservice.server.model.CreatedMetadata;
 import it.connectpa.odatapushservice.server.model.InlineResponse400;
 import it.connectpa.odatapushservice.server.model.Metadata;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,16 @@ import org.springframework.web.context.request.NativeWebRequest;
 public class PushService implements ApiApi, ResourceApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(PushService.class);
+
+    private static final String SQL_INSERT = "INSERT INTO ${table}(${keys}) VALUES(${values})";
+
+    private static final String TABLE_REGEX = "\\$\\{table\\}";
+
+    private static final String KEYS_REGEX = "\\$\\{keys\\}";
+
+    private static final String VALUES_REGEX = "\\$\\{values\\}";
+
+    private final int BATCHSIZE = 1000;
 
     @Autowired
     private PushDataDAO pushDataDAO;
@@ -105,16 +118,54 @@ public class PushService implements ApiApi, ResourceApi {
         LOG.info("PUT: {} {}", id, body);
 
         InstertedData responsePayload = new InstertedData();
-        try (StringReader reader = new StringReader(body);
-                CSVReader csvReader = new CSVReader(reader)) {
+        Optional<String> tableName = pushDataDAO.findMetaData("id", id);
+        if (tableName.isPresent()) {
+            try (StringReader reader = new StringReader(body);
+                    CSVReader csvReader = new CSVReader(reader)) {
+                String[] headerRow = csvReader.readNext();
 
-            Integer recordsNumber = csvReader.readAll().size() - 1;
-            responsePayload.setId(id);
-            responsePayload.setRecordsNumber(recordsNumber);
+                if (null == headerRow) {
+                    throw new FileNotFoundException(
+                            "No columns defined in given CSV file." + "Please check the CSV file format.");
+                }
+                List<TableColumn> columns = pushDataDAO.findTableColumns(tableName.get());
+                for (String column : headerRow) {
+                    columns.stream().filter(c -> column.toLowerCase()
+                            .equals(c.getField().toLowerCase())).findAny().
+                            orElseThrow(()
+                                    -> new BadRequestException(400, "A column with " + column + " does not exist"));
+                }
 
-            LOG.info("Number of records {}", recordsNumber);
-        } catch (IOException e) {
-            LOG.error("While parsing CSV file {}", e.getMessage());
+                String questionmarks = StringUtils.repeat("?,", headerRow.length);
+                questionmarks = questionmarks.substring(0, questionmarks
+                        .length() - 1);
+                String query = SQL_INSERT.replaceFirst(TABLE_REGEX, tableName.get());
+                query = query.replaceFirst(KEYS_REGEX, StringUtils.join(headerRow, ","));
+                query = query.replaceFirst(VALUES_REGEX, questionmarks);
+
+                String[] nextLine;
+                int count = 0;
+                List<String[]> batchList = new ArrayList<>();
+                while ((nextLine = csvReader.readNext()) != null) {
+                    if (null != nextLine) {
+                        batchList.add(nextLine);
+                    }
+                    if (++count % BATCHSIZE == 0) {
+                        pushDataDAO.insertData(query, batchList);
+                        batchList = new ArrayList<>();
+                    }
+
+                }
+                pushDataDAO.insertData(query, batchList);
+                responsePayload.setId(id);
+                responsePayload.setRecordsNumber(count);
+
+                LOG.info("Number of records {}", count);
+            } catch (IOException e) {
+                LOG.error("While parsing CSV file {}", e.getMessage());
+            }
+        } else {
+            throw new BadRequestException(404, "The dataset with id " + id + " does not exist");
         }
 
         return new ResponseEntity<>(responsePayload, HttpStatus.OK);

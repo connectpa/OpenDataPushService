@@ -129,10 +129,11 @@ public class PushServiceTests {
             }
         };
 
+        String id = prepareTestTable("InsertTest");
         PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
-        InstertedData response = api.insertData("abcd-efgh", payload.asCharSource(Charsets.UTF_8).read());
+        InstertedData response = api.insertData(id, payload.asCharSource(Charsets.UTF_8).read());
         assertEquals(Integer.valueOf(10), response.getRecordsNumber());
-        assertEquals("abcd-efgh", response.getId());
+        assertEquals(id, response.getId());
     }
 
     @Test
@@ -145,7 +146,8 @@ public class PushServiceTests {
             }
         };
 
-        HttpPut insertData = new HttpPut("http://localhost:" + port + "/resource/abcd-efgh.json");
+        String id = prepareTestTable("issue5");
+        HttpPut insertData = new HttpPut("http://localhost:" + port + "/resource/" + id + ".json");
         insertData.setHeader(HttpHeaders.CONTENT_TYPE, "text/csv");
         insertData.setEntity(new StringEntity(
                 payload.asCharSource(Charsets.UTF_8).read(), ContentType.create("text/csv", Consts.UTF_8)));
@@ -155,6 +157,28 @@ public class PushServiceTests {
         InstertedData response = new ObjectMapper().
                 readValue(httpResponse.getEntity().getContent(), InstertedData.class);
         assertEquals(Integer.valueOf(10), response.getRecordsNumber());
-        assertEquals("abcd-efgh", response.getId());
+        assertEquals(id, response.getId());
+    }
+
+    private String prepareTestTable(String metadataName) {
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        Metadata payload1 = new Metadata();
+        payload1.setName(metadataName);
+        String id = api.createMetadata(payload1).getId();
+        Column payload2 = new Column();
+        payload2.setName("TestNumber");
+        payload2.setDataTypeName("number");
+        api.addColumn(id, payload2);
+        payload2.setName("TestCalendarDate");
+        payload2.setDataTypeName("calendar_date");
+        api.addColumn(id, payload2);
+        payload2.setName("TestText");
+        payload2.setDataTypeName("text");
+        api.addColumn(id, payload2);
+        payload2.setName("TestCheckbox");
+        payload2.setDataTypeName("checkbox");
+        api.addColumn(id, payload2);
+
+        return id;
     }
 }
