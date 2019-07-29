@@ -82,6 +82,19 @@ public class PushServiceTests {
     }
 
     @Test
+    public void addColumnWithWhiteSpace() {
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        Column payload = new Column();
+        payload.setName("Test Test");
+        payload.setDataTypeName("number");
+        String id = UUID.nameUUIDFromBytes("test_metadata".getBytes()).toString();
+        CreatedColumn response = api.addColumn(id, payload);
+        assertEquals(id, response.getId());
+        assertEquals("test_test", response.getName());
+        assertEquals("number", response.getDataTypeName());
+    }
+
+    @Test
     public void addColumnNoDataset() throws IOException {
         PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
         Column payload = new Column();
@@ -114,7 +127,7 @@ public class PushServiceTests {
 
             BadRequestException bre = MAPPER.readValue(e.getResponseBodyAsByteArray(), BadRequestException.class);
             assertEquals(400, bre.getCode().intValue());
-            assertEquals("The column with name Test is already existing", bre.getMessage());
+            assertEquals("The column with name test is already existing", bre.getMessage());
         }
 
     }

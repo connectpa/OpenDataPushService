@@ -87,10 +87,11 @@ public class PushService implements ApiApi, ResourceApi {
         LOG.info("POST to create a new column : {}  in a dataset with id {}", column, id);
 
         Optional<String> tableName = pushDataDAO.findMetaData("id", id);
+        column.setName(column.getName().replaceAll("\\s", "_").toLowerCase());
         if (tableName.isPresent()) {
             List<TableColumn> columns = pushDataDAO.findTableColumns(tableName.get());
             if (CollectionUtils.isEmpty(columns)
-                    || !(columns.stream().anyMatch(c -> column.getName().toLowerCase()
+                    || !(columns.stream().anyMatch(c -> column.getName()
                     .equals(c.getField().toLowerCase())))) {
                 pushDataDAO.createColumn(tableName.get(), column);
 

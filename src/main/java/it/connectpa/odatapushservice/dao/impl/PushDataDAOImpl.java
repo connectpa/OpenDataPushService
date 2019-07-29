@@ -99,7 +99,7 @@ public class PushDataDAOImpl implements PushDataDAO {
     @Override
     public void createColumn(final String tableName, final Column column) {
         String sql = "ALTER TABLE " + tableName + " ADD " + column.getName()
-                + " " + TYPES.get(column.getDataTypeName());
+                + " " + TYPES.get(column.getDataTypeName().toLowerCase());
         jdbcTemplate.execute(sql);
 
     }
