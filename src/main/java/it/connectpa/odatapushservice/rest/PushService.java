@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.NativeWebRequest;
 
 @RestController
+@Transactional
 public class PushService implements ApiApi, ResourceApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(PushService.class);
@@ -129,12 +132,14 @@ public class PushService implements ApiApi, ResourceApi {
                     throw new FileNotFoundException(
                             "No columns defined in given CSV file." + "Please check the CSV file format.");
                 }
-                List<TableColumn> columns = pushDataDAO.findTableColumns(tableName.get());
+                List<TableColumn> columns =
+                        pushDataDAO.findTableColumns(tableName.get()).stream().filter(c -> !"id".
+                        equals(c.getField().toLowerCase()))
+                                .collect(Collectors.toList());
                 for (String column : headerRow) {
-                    columns.stream().filter(c -> column.toLowerCase()
-                            .equals(c.getField().toLowerCase())).findAny().
-                            orElseThrow(()
-                                    -> new BadRequestException(400, "A column with " + column + " does not exist"));
+                    if (!columns.stream().anyMatch(c -> c.getField().toLowerCase().equals(column.toLowerCase()))) {
+                        throw new BadRequestException(400, "A column with " + column + " does not exist");
+                    }
                 }
 
                 String questionmarks = StringUtils.repeat("?,", headerRow.length);

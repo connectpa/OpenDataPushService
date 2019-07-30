@@ -75,7 +75,7 @@ public class PushDataDAOImpl implements PushDataDAO {
 
         int number = insert.execute(args);
         if (number == 1) {
-            jdbcTemplate.execute("CREATE TABLE " + metadata.getName());
+            jdbcTemplate.execute("CREATE TABLE " + metadata.getName() + "(ID int NOT NULL PRIMARY KEY AUTO_INCREMENT)");
         }
 
         LOG.info("Number of rows affected: {} ", number);
