@@ -30,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -147,6 +148,51 @@ public class PushServiceTests {
         InstertedData response = api.insertData(id, payload.asCharSource(Charsets.UTF_8).read());
         assertEquals(Integer.valueOf(10), response.getRecordsNumber());
         assertEquals(id, response.getId());
+    }
+
+    @Test
+    public void insertDataColumnNotExisting() throws IOException {
+        ByteSource payload = new ByteSource() {
+
+            @Override
+            public InputStream openStream() throws IOException {
+                return getClass().getResourceAsStream("/test_error400.csv");
+            }
+        };
+
+        String id = prepareTestTable("InsertTestError");
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        try {
+            api.insertData(id, payload.asCharSource(Charsets.UTF_8).read());
+        } catch (HttpClientErrorException e) {
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatusCode());
+
+            BadRequestException bre = MAPPER.readValue(e.getResponseBodyAsByteArray(), BadRequestException.class);
+            assertEquals(400, bre.getCode().intValue());
+            assertEquals("A column with TestTex does not exist", bre.getMessage());
+        }
+    }
+
+    @Test
+    public void insertDataWrongValue() throws IOException {
+        ByteSource payload = new ByteSource() {
+
+            @Override
+            public InputStream openStream() throws IOException {
+                return getClass().getResourceAsStream("/test_error500.csv");
+            }
+        };
+
+        String id = prepareTestTable("InsertTestError500");
+        PushServiceApi api = new PushServiceApi(new ApiClient().setBasePath("http://localhost:" + port));
+        try {
+            api.insertData(id, payload.asCharSource(Charsets.UTF_8).read());
+        } catch (HttpServerErrorException e) {
+            assertEquals(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e.getStatusCode());
+
+            BadRequestException bre = MAPPER.readValue(e.getResponseBodyAsByteArray(), BadRequestException.class);
+            assertEquals(500, bre.getCode().intValue());
+        }
     }
 
     @Test

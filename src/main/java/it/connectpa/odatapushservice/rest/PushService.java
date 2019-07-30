@@ -185,4 +185,17 @@ public class PushService implements ApiApi, ResourceApi {
         return new ResponseEntity<>(responsePayload, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<InlineResponse400> internalServerErrorException(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            final RuntimeException e) {
+        LOG.error("Unexpected error", e);
+
+        InlineResponse400 responsePayload = new InlineResponse400();
+        responsePayload.setCode(500);
+        responsePayload.setMessage(e.getMessage());
+        return new ResponseEntity<>(responsePayload, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }
