@@ -14,3 +14,5 @@ CREATE TABLE Product
   name VARCHAR(255) NOT NULL UNIQUE,
   description VARCHAR(255) NULL
 );
+
+Insert into PRODUCT ( NAME , DESCRIPTION ) VALUES ('Test1', 'this is for test1'),('Test2','this is for test2');

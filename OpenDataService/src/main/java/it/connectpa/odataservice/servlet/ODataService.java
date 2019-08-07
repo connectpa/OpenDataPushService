@@ -1,6 +1,9 @@
 package it.connectpa.odataservice.servlet;
 
 import it.connectpa.odataservice.service.ODataEdmProvider;
+import it.connectpa.odataservice.service.ODataEntityCollectionProcessor;
+import it.connectpa.odataservice.service.ODataEntityProcessor;
+import it.connectpa.odataservice.service.ODataPrimitiveProcessor;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.servlet.ServletException;
@@ -25,6 +28,15 @@ public class ODataService extends HttpServlet {
     @Autowired
     private ODataEdmProvider oDataEdmProvider;
 
+    @Autowired
+    private ODataEntityCollectionProcessor oDataEntityCollectionProcessor;
+
+    @Autowired
+    private ODataEntityProcessor oDataEntityProcessor;
+
+    @Autowired
+    private ODataPrimitiveProcessor oDataPrimitiveProcessor;
+
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException,
             IOException {
@@ -33,6 +45,10 @@ public class ODataService extends HttpServlet {
             OData oData = OData.newInstance();
             ServiceMetadata edm = oData.createServiceMetadata(oDataEdmProvider, new ArrayList<>());
             ODataHttpHandler handler = oData.createHandler(edm);
+
+            handler.register(oDataEntityCollectionProcessor);
+            handler.register(oDataEntityProcessor);
+            handler.register(oDataPrimitiveProcessor);
 
             handler.process(req, resp);
         } catch (RuntimeException e) {

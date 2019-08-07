@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import it.connectpa.odataservice.dao.ODataDAO;
 import it.connectpa.odataservice.model.EntityProperty;
+import java.util.Map;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -45,6 +46,16 @@ public class ODataDAOImpl implements ODataDAO {
         return jdbcTemplate.query(
                 "SHOW COLUMNS FROM " + entity,
                 (rs, rownumber) -> buildProperty(rs));
+    }
+
+    @Override
+    public List<Map<String, Object>> findData(final String tableName) {
+        return jdbcTemplate.queryForList("SELECT * FROM " + tableName);
+    }
+
+    @Override
+    public Map<String, Object> findDataById(final String tableName, final String column, final String value) {
+        return jdbcTemplate.queryForMap("SELECT * FROM " + tableName + " WHERE " + column + " = " + value);
     }
 
     private MetadataInfo build(final ResultSet rs) throws SQLException {

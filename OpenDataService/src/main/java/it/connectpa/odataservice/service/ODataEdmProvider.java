@@ -145,8 +145,8 @@ public class ODataEdmProvider extends CsdlAbstractEdmProvider {
     }
 
     @Override
-    public CsdlEntityContainerInfo getEntityContainerInfo(FullQualifiedName entityContainerName) {
-        // This method is invoked when displaying the Service Document at e.g. http://localhost:8080/DemoService/DemoService.svc
+    public CsdlEntityContainerInfo getEntityContainerInfo(final FullQualifiedName entityContainerName) {
+        // This method is invoked when displaying the Service Document at e.g. http://localhost:8080/odata
         if (entityContainerName == null || entityContainerName.equals(CONTAINER)) {
             CsdlEntityContainerInfo entityContainerInfo = new CsdlEntityContainerInfo();
             entityContainerInfo.setContainerName(CONTAINER);
