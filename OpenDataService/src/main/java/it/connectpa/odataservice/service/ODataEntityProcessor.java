@@ -24,6 +24,7 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -50,11 +51,22 @@ public class ODataEntityProcessor implements EntityProcessor {
 
         EdmEntityType entityType = edmEntitySet.getEntityType();
 
+        SelectOption selectOption = uriInfo.getSelectOption();
+
+        String selectList = odata.createUriHelper().buildContextURLSelectList(entityType, null,
+                selectOption);
+
         ContextURL contextUrl = ContextURL.
                 with().
+                selectList(selectList).
                 entitySet(edmEntitySet).
                 build();
-        EntitySerializerOptions options = EntitySerializerOptions.with().contextURL(contextUrl).build();
+
+        EntitySerializerOptions options = EntitySerializerOptions.
+                with().
+                contextURL(contextUrl).
+                select(selectOption).
+                build();
 
         ODataSerializer serializer = odata.createSerializer(responseFormat);
         SerializerResult serializerResult = serializer.entity(serviceMetadata, entityType, entity, options);
