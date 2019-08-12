@@ -15,4 +15,5 @@ CREATE TABLE Product
   description VARCHAR(255) NULL
 );
 
-Insert into PRODUCT ( NAME , DESCRIPTION ) VALUES ('Test1', 'this is for test1'),('Test2','this is for test2');
+Insert into PRODUCT ( NAME , DESCRIPTION ) VALUES ('Test1', 'Description is for test1'),
+('Test2','Description is for test2'),('Test3','Description is for test3');
