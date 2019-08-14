@@ -3,6 +3,7 @@ language: java
 jdk:
   - openjdk8
 before_install:
+  - cd OpenDataPushService
   - echo 'MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"' >~/.mavenrc
 # default install is mvn install --quiet -DskipTests=true
 install: travis_wait 30 mvn --show-version --quiet -T 1C clean install
