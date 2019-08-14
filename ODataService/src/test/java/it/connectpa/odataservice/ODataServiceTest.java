@@ -22,7 +22,6 @@ import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.Edm;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmProperty;
-import org.apache.olingo.commons.api.edm.EdmSchema;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,23 +67,22 @@ public class ODataServiceTest {
     @Test
     public void readEntityTypes() {
         List<FullQualifiedName> entityTypes = new ArrayList<>();
-        for (EdmSchema schema : edm.getSchemas()) {
-            for (EdmEntityType entityType : schema.getEntityTypes()) {
+        edm.getSchemas().forEach(schema -> {
+            schema.getEntityTypes().forEach(entityType -> {
                 entityTypes.add(entityType.getFullQualifiedName());
-            }
-        }
+            });
+        });
         assertTrue(entityTypes.contains(new FullQualifiedName(NAME_SPACE, PRODUCT_ENTITY)));
     }
 
     @Test
-    public void readProperities() {
+    public void readProperties() {
         EdmEntityType etype = edm.getEntityType(new FullQualifiedName(NAME_SPACE, PRODUCT_ENTITY));
-        List<String> properities = new ArrayList<>();
-        for (String propertyName : etype.getPropertyNames()) {
-            properities.add(propertyName);
-
-        }
-        assertTrue(properities.contains(NAME_PROPERTY));
+        List<String> properties = new ArrayList<>();
+        etype.getPropertyNames().forEach(propertyName -> {
+            properties.add(propertyName);
+        });
+        assertTrue(properties.contains(NAME_PROPERTY));
         EdmProperty property = etype.getStructuralProperty(NAME_PROPERTY);
         assertEquals("String", property.getType().getName());
     }
@@ -148,8 +146,8 @@ public class ODataServiceTest {
     }
 
     @Test
-    public void readEntitiesWithSelectt() {
-        ClientEntitySet entities = readEntitiesWithSelect(PRODUCT_ENTITY_SET, ID_PROPERTY);
+    public void readEntitiesWithSelect() {
+        ClientEntitySet entities = ODataServiceTest.this.readEntitiesWithSelect(PRODUCT_ENTITY_SET, ID_PROPERTY);
         entities.getEntities().forEach(entity -> {
             assertNotNull(entity.getProperty(ID_PROPERTY));
             assertNull(entity.getProperty(NAME_PROPERTY));
