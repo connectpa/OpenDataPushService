@@ -66,12 +66,6 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.atteo</groupId>
-      <artifactId>evo-inflector</artifactId>
-      <version>1.2.2</version>
-    </dependency>
   </dependencies>
     
   <build>

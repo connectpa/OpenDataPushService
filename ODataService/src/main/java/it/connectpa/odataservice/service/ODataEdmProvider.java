@@ -17,7 +17,6 @@ import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
 import org.apache.olingo.commons.api.edm.provider.CsdlSchema;
 import org.apache.olingo.commons.api.ex.ODataException;
-import org.atteo.evo.inflector.English;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +34,8 @@ public class ODataEdmProvider extends CsdlAbstractEdmProvider {
     public static final String CONTAINER_NAME = "Container";
 
     public static final FullQualifiedName CONTAINER = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
+
+    public static final String ENTITY_SET_SUFFIX = "_Set";
 
     @Autowired
     private ODataDAO oDataDAO;
@@ -80,11 +81,11 @@ public class ODataEdmProvider extends CsdlAbstractEdmProvider {
         if (entityContainer.equals(CONTAINER)) {
             List<MetadataInfo> entities = oDataDAO.findAllEntities();
             MetadataInfo entity = entities.stream().
-                    filter(e -> entitySetName.equals(English.plural(e.getName()))).
+                    filter(e -> entitySetName.equals(e.getName() + ENTITY_SET_SUFFIX)).
                     findFirst().orElse(null);
             if (entity != null) {
                 CsdlEntitySet entitySet = new CsdlEntitySet();
-                entitySet.setName(English.plural(entity.getName()));
+                entitySet.setName(entity.getName() + ENTITY_SET_SUFFIX);
                 entitySet.setType(new FullQualifiedName(NAMESPACE, entity.getName()));
 
                 return entitySet;
@@ -101,7 +102,7 @@ public class ODataEdmProvider extends CsdlAbstractEdmProvider {
         List<MetadataInfo> entities = oDataDAO.findAllEntities();
         entities.forEach(entity -> {
             try {
-                entitySets.add(getEntitySet(CONTAINER, English.plural(entity.getName())));
+                entitySets.add(getEntitySet(CONTAINER, entity.getName() + ENTITY_SET_SUFFIX));
             } catch (ODataException e) {
                 LOG.error("While adding an entitySet {}", e);
             }

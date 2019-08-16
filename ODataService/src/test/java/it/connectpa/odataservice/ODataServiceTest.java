@@ -44,7 +44,7 @@ public class ODataServiceTest {
 
     private final static String PRODUCT_ENTITY = "Product";
 
-    private final static String PRODUCT_ENTITY_SET = "Products";
+    private final static String PRODUCT_ENTITY_SET = "Product_Set";
 
     private final static String ID_PROPERTY = "ID";
 
